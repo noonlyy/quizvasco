@@ -1,5 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define MAX_PLAYERS 100
+#define MAX_NAME_LENGTH 50
+#define RANKING_FILE "ranking.txt"
+
+typedef struct {
+    char nome[MAX_NAME_LENGTH];
+    int pontuacao;
+} Jogador;
+
+Jogador ranking[MAX_PLAYERS];
+int numJogadores = 0;
 
 void limparTela() {
 #if defined(_WIN32) || defined(_WIN64)
@@ -15,13 +28,66 @@ void esperarEnter() {
     getchar();
 }
 
+void carregarRanking() {
+    FILE *file = fopen(RANKING_FILE, "r");
+    if (file != NULL) {
+        while (fscanf(file, "%49s %d", ranking[numJogadores].nome, &ranking[numJogadores].pontuacao) == 2) {
+            numJogadores++;
+        }
+        fclose(file);
+    }
+}
+
+int compararJogadores(const void *a, const void *b) {
+    Jogador *jogadorA = (Jogador *)a;
+    Jogador *jogadorB = (Jogador *)b;
+    return jogadorB->pontuacao - jogadorA->pontuacao;
+}
+
+void salvarRanking() {
+    FILE *file = fopen(RANKING_FILE, "w");
+    if (file != NULL) {
+        for (int i = 0; i < numJogadores; i++) {
+            fprintf(file, "%s %d\n", ranking[i].nome, ranking[i].pontuacao);
+        }
+        fclose(file);
+    }
+}
+
+void adicionarJogadorAoRanking(const char *nome, int pontuacao) {
+    if (numJogadores < MAX_PLAYERS) {
+        strcpy(ranking[numJogadores].nome, nome);
+        ranking[numJogadores].pontuacao = pontuacao;
+        numJogadores++;
+        qsort(ranking, numJogadores, sizeof(Jogador), compararJogadores);
+        salvarRanking();
+    }
+}
+
+void exibirRanking() {
+    limparTela();
+    printf("\n--- Ranking ---\n");
+    for (int i = 0; i < numJogadores; i++) {
+        printf("%d. %s - %d pontos\n", i + 1, ranking[i].nome, ranking[i].pontuacao);
+    }
+    esperarEnter();
+}
+
+void perguntarNome(char *nome) {
+    limparTela();
+    printf("Digite seu nome: ");
+    fgets(nome, MAX_NAME_LENGTH, stdin);
+    nome[strcspn(nome, "\n")] = 0;  
+}
+
 int exibirMenu() {
     limparTela();
     printf("\n\e[1;31m--- QUIZ VASCO DA GAMA\e[0;0m ---\n");
     printf("1. Iniciar Quiz\n");
     printf("2. Regras do Quiz\n");
     printf("3. Creditos\n");
-    printf("4. Sair\n");
+    printf("4. Exibir Ranking\n");
+    printf("5. Sair\n");
     printf("Escolha uma opcao: ");
     return 0;
 }
@@ -41,7 +107,7 @@ int exibirCreditos() {
     limparTela();
     printf("\n--- Creditos ---\n");
     printf("Desenvolvido por: gabriel\n");
-    printf("Versao: 1.1\n");
+    printf("Versao: 1.2\n");
     esperarEnter();
     return 0;
 }
@@ -64,7 +130,7 @@ int obterResposta() {
     return resposta;
 }
 
-int iniciarQuiz() {
+int iniciarQuiz(const char *nome) {
     limparTela();
     int resposta, pontuacao = 0;
 
@@ -148,7 +214,7 @@ int iniciarQuiz() {
         printf("\nErrado! A resposta correta e Philippe Coutinho.\n");
     }
 
-    printf("\nPergunta 7: Quem criou o primeiro hino do vasco que se chama \e[1;34mHINO TRINFUAL VASCO DA GAMA\e[0;0m?\n");
+    printf("\nPergunta 7: Quem criou o primeiro hino do Vasco que se chama \e[1;34mHINO TRIUNFAL VASCO DA GAMA\e[0;0m?\n");
     printf("1. Joao de Freitas\n");
     printf("2. Joaquim Barros\n");
     printf("3. Lamartine Babo\n");
@@ -162,9 +228,9 @@ int iniciarQuiz() {
     }
 
     printf("\nPergunta 8: Por que foi dado o nome para o clube de Vasco?\n");
-    printf("1. Por que foram influenciados por Portugal\n");
-    printf("2. Por que o fundador do time se chamava Vasco\n");
-    printf("3. Por que eles acharam bonito o nome\n");
+    printf("1. Porque foram influenciados por Portugal\n");
+    printf("2. Porque o fundador do time se chamava Vasco\n");
+    printf("3. Porque eles acharam bonito o nome\n");
     printf("4. Pelo navegador Vasco da Gama\n");
     resposta = obterResposta();
     if (resposta == 4) {
@@ -175,25 +241,26 @@ int iniciarQuiz() {
     }
 
     printf("\nQuiz finalizado! \e[1;37mSua pontuacao: %d/8\e[0;0m\n", pontuacao);
+    adicionarJogadorAoRanking(nome, pontuacao);
     esperarEnter();
     return 0;
 }
 
 int main() {
     int opcao;
+    char nome[MAX_NAME_LENGTH];
+
+    carregarRanking();
 
     do {
         exibirMenu();
-        if (scanf("%d", &opcao) != 1) {
-            while (getchar() != '\n')
-                ;
-            printf("Opção invalida! Tente novamente.\n");
-            continue;
-        }
+        scanf("%d", &opcao);
+        getchar(); 
 
         switch (opcao) {
             case 1:
-                iniciarQuiz();
+                perguntarNome(nome);
+                iniciarQuiz(nome);
                 break;
             case 2:
                 exibirRegras();
@@ -202,13 +269,16 @@ int main() {
                 exibirCreditos();
                 break;
             case 4:
+                exibirRanking();
+                break;
+            case 5:
                 printf("Saindo do quiz...\n");
                 break;
             default:
                 printf("Opção invalida! Tente novamente.\n");
                 break;
         }
-    } while (opcao != 4);
+    } while (opcao != 5);
 
     return 0;
 }
