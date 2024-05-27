@@ -1,18 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define MAX_PLAYERS 100
 #define MAX_NAME_LENGTH 50
 #define RANKING_FILE "ranking.txt"
+#define NUM_QUESTIONS 8
 
 typedef struct {
     char nome[MAX_NAME_LENGTH];
     int pontuacao;
 } Jogador;
 
+typedef struct {
+    char pergunta[256];
+    char opcoes[4][100];
+    int respostaCorreta;
+} Pergunta;
+
 Jogador ranking[MAX_PLAYERS];
 int numJogadores = 0;
+
+Pergunta perguntas[NUM_QUESTIONS] = {
+    {
+        "Qual o principal rival do Vasco?",
+        {"Botafogo", "Fluminense", "Flamengo", "Corinthians"},
+        3
+    },
+    {
+        "Em que ano o Clube de Regatas Vasco da Gama foi fundado?",
+        {"1890", "1898", "1897", "1902"},
+        2
+    },
+    {
+        "Quantas vezes o Vasco foi campeao do Campeonato Brasileiro?",
+        {"7", "5", "3", "4"},
+        2
+    },
+    {
+        "Qual e o atual presidente (2024) do Vasco?",
+        {"Dinamite", "Eurico Miranda", "Jorge Salgado", "Pedrinho"},
+        4
+    },
+    {
+        "Quantas vezes o Vasco ganhou o Campeonato Carioca?",
+        {"12", "25", "18", "24"},
+        1
+    },
+    {
+        "Qual o nome do jogador da base do Vasco que foi vendido para a Internazionale da Italia?",
+        {"Roberto Dinamite", "Ze Gabriel", "Philippe Coutinho", "Douglas Luiz"},
+        3
+    },
+    {
+        "Quem criou o primeiro hino do Vasco que se chama \e[1;34mHINO TRIUNFAL VASCO DA GAMA\e[0;0m?",
+        {"Joao de Freitas", "Joaquim Barros", "Lamartine Babo", "Ernani Correa"},
+        2
+    },
+    {
+        "Por que foi dado o nome para o clube de Vasco?",
+        {"Porque foram influenciados por Portugal", "Porque o fundador do time se chamava Vasco", "Porque eles acharam bonito o nome", "Pelo navegador Vasco da Gama"},
+        4
+    }
+};
 
 void limparTela() {
 #if defined(_WIN32) || defined(_WIN64)
@@ -82,11 +133,11 @@ void perguntarNome(char *nome) {
 
 int exibirMenu() {
     limparTela();
-    printf("\n\e[1;31m--- QUIZ VASCO DA GAMA\e[0;0m ---\n");
+    printf("\n\e[1;31m--- QUIZ VASCO DA GAMA ---\e[0;0m\n");
     printf("1. Iniciar Quiz\n");
     printf("2. Regras do Quiz\n");
-    printf("3. Creditos\n");
-    printf("4. Exibir Ranking\n");
+    printf("3. Exibir Ranking\n");
+    printf("4. Creditos\n");
     printf("5. Sair\n");
     printf("Escolha uma opcao: ");
     return 0;
@@ -107,7 +158,7 @@ int exibirCreditos() {
     limparTela();
     printf("\n--- Creditos ---\n");
     printf("Desenvolvido por: gabriel\n");
-    printf("Versao: 1.2\n");
+    printf("Versao: 1.3\n");
     esperarEnter();
     return 0;
 }
@@ -116,13 +167,13 @@ int obterResposta() {
     int resposta;
     char buffer;
     while (1) {
-        printf("Sua resposta: ");
+        printf("\nSua resposta: ");
         if (scanf("%d", &resposta) == 1 && resposta >= 1 && resposta <= 4) {
             while ((buffer = getchar()) != '\n' && buffer != EOF)
                 ;
             break;
         } else {
-            printf("Resposta invalida! Por favor, escolha um numero entre 1 e 4.\n");
+            printf("\nResposta invalida! Por favor, escolha um numero entre 1 e 4.\n");
             while ((buffer = getchar()) != '\n' && buffer != EOF)
                 ;
         }
@@ -130,117 +181,39 @@ int obterResposta() {
     return resposta;
 }
 
+void embaralharPerguntas(Pergunta perguntas[], int tamanho) {
+    srand(time(NULL));
+    for (int i = 0; i < tamanho; i++) {
+        int j = rand() % tamanho;
+        Pergunta temp = perguntas[i];
+        perguntas[i] = perguntas[j];
+        perguntas[j] = temp;
+    }
+}
+
 int iniciarQuiz(const char *nome) {
     limparTela();
     int resposta, pontuacao = 0;
 
+    embaralharPerguntas(perguntas, NUM_QUESTIONS);
+
     printf("\n\e[1;37m--- Inicio do Quiz ---\e[1;0m\n");
 
-    printf("\nPergunta 1: Qual o principal rival do Vasco?\n");
-    printf("1. Botafogo\n");
-    printf("2. Fluminense\n");
-    printf("3. Flamengo\n");
-    printf("4. Corinthians\n");
-    resposta = obterResposta();
-    if (resposta == 3) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e Flamengo.\n");
+    for (int i = 0; i < NUM_QUESTIONS; i++) {
+        printf("\nPergunta %d: %s\n", i + 1, perguntas[i].pergunta);
+        for (int j = 0; j < 4; j++) {
+            printf("%d. %s\n", j + 1, perguntas[i].opcoes[j]);
+        }
+        resposta = obterResposta();
+        if (resposta == perguntas[i].respostaCorreta) {
+            pontuacao++;
+            printf("\nCorreto!\n");
+        } else {
+            printf("\nErrado! A resposta correta e %s.\n", perguntas[i].opcoes[perguntas[i].respostaCorreta - 1]);
+        }
     }
 
-    printf("\nPergunta 2: Em que ano o Clube de Regatas Vasco da Gama foi fundado?\n");
-    printf("1. 1890\n");
-    printf("2. 1898\n");
-    printf("3. 1897\n");
-    printf("4. 1902\n");
-    resposta = obterResposta();
-    if (resposta == 2) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e 1898.\n");
-    }
-
-    printf("\nPergunta 3: Quantas vezes o Vasco foi campeao do Campeonato Brasileiro?\n");
-    printf("1. 7\n");
-    printf("2. 5\n");
-    printf("3. 3\n");
-    printf("4. 4\n");
-    resposta = obterResposta();
-    if (resposta == 2) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e 5.\n");
-    }
-
-    printf("\nPergunta 4: Qual e o atual presidente (2024) do Vasco?\n");
-    printf("1. Dinamite\n");
-    printf("2. Eurico Miranda\n");
-    printf("3. Jorge Salgado\n");
-    printf("4. Pedrinho\n");
-    resposta = obterResposta();
-    if (resposta == 4) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e Pedrinho.\n");
-    }
-
-    printf("\nPergunta 5: Quantas vezes o Vasco ganhou o Campeonato Carioca?\n");
-    printf("1. 12\n");
-    printf("2. 25\n");
-    printf("3. 18\n");
-    printf("4. 24\n");
-    resposta = obterResposta();
-    if (resposta == 1) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e 12 vezes.\n");
-    }
-
-    printf("\nPergunta 6: Qual o nome do jogador da base do Vasco que foi vendido para a Internazionale da Italia?\n");
-    printf("1. Roberto Dinamite\n");
-    printf("2. Ze Gabriel\n");
-    printf("3. Philippe Coutinho\n");
-    printf("4. Douglas Luiz\n");
-    resposta = obterResposta();
-    if (resposta == 3) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e Philippe Coutinho.\n");
-    }
-
-    printf("\nPergunta 7: Quem criou o primeiro hino do Vasco que se chama \e[1;34mHINO TRIUNFAL VASCO DA GAMA\e[0;0m?\n");
-    printf("1. Joao de Freitas\n");
-    printf("2. Joaquim Barros\n");
-    printf("3. Lamartine Babo\n");
-    printf("4. Ernani Correa\n");
-    resposta = obterResposta();
-    if (resposta == 2) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e Joaquim Barros.\n");
-    }
-
-    printf("\nPergunta 8: Por que foi dado o nome para o clube de Vasco?\n");
-    printf("1. Porque foram influenciados por Portugal\n");
-    printf("2. Porque o fundador do time se chamava Vasco\n");
-    printf("3. Porque eles acharam bonito o nome\n");
-    printf("4. Pelo navegador Vasco da Gama\n");
-    resposta = obterResposta();
-    if (resposta == 4) {
-        pontuacao++;
-        printf("Correto!\n");
-    } else {
-        printf("\nErrado! A resposta correta e pelo navegador Vasco da Gama.\n");
-    }
-
-    printf("\nQuiz finalizado! \e[1;37mSua pontuacao: %d/8\e[0;0m\n", pontuacao);
+    printf("\nQuiz finalizado! \e[1;37mSua pontuacao: %d/%d\e[0;0m\n", pontuacao, NUM_QUESTIONS);
     adicionarJogadorAoRanking(nome, pontuacao);
     esperarEnter();
     return 0;
@@ -255,7 +228,7 @@ int main() {
     do {
         exibirMenu();
         scanf("%d", &opcao);
-        getchar(); 
+        getchar(); // Remove newline character left in the input buffer
 
         switch (opcao) {
             case 1:
@@ -266,16 +239,17 @@ int main() {
                 exibirRegras();
                 break;
             case 3:
-                exibirCreditos();
-                break;
-            case 4:
                 exibirRanking();
                 break;
+            case 4:
+                exibirCreditos();
+                break;
             case 5:
-                printf("Saindo do quiz...\n");
+                printf("\nSaindo do quiz...\n");
                 break;
             default:
-                printf("Opção invalida! Tente novamente.\n");
+                printf("Opcao invalida! Tente novamente.\n");
+                esperarEnter();
                 break;
         }
     } while (opcao != 5);
