@@ -74,184 +74,126 @@ void limparTela() {
 }
 
 void esperarEnter() {
-    printf("\nPressione Enter para retornar ao menu...");
+    printf("\nPressione Enter para continuar...");
     getchar();
     getchar();
 }
 
-void carregarRanking() {
-    FILE *file = fopen(RANKING_FILE, "r");
+int main() {
+    int opcao;
+    char nome[MAX_NAME_LENGTH];
+    FILE *file;
+
+    file = fopen(RANKING_FILE, "r");
     if (file != NULL) {
         while (fscanf(file, "%49s %d", ranking[numJogadores].nome, &ranking[numJogadores].pontuacao) == 2) {
             numJogadores++;
         }
         fclose(file);
     }
-}
-
-int compararJogadores(const void *a, const void *b) {
-    Jogador *jogadorA = (Jogador *)a;
-    Jogador *jogadorB = (Jogador *)b;
-    return jogadorB->pontuacao - jogadorA->pontuacao;
-}
-
-void salvarRanking() {
-    FILE *file = fopen(RANKING_FILE, "w");
-    if (file != NULL) {
-        for (int i = 0; i < numJogadores; i++) {
-            fprintf(file, "%s %d\n", ranking[i].nome, ranking[i].pontuacao);
-        }
-        fclose(file);
-    }
-}
-
-void adicionarJogadorAoRanking(const char *nome, int pontuacao) {
-    if (numJogadores < MAX_PLAYERS) {
-        strcpy(ranking[numJogadores].nome, nome);
-        ranking[numJogadores].pontuacao = pontuacao;
-        numJogadores++;
-        qsort(ranking, numJogadores, sizeof(Jogador), compararJogadores);
-        salvarRanking();
-    }
-}
-
-void exibirRanking() {
-    limparTela();
-    printf("\n--- Ranking ---\n");
-    for (int i = 0; i < numJogadores; i++) {
-        printf("%d. %s - %d pontos\n", i + 1, ranking[i].nome, ranking[i].pontuacao);
-    }
-    esperarEnter();
-}
-
-void perguntarNome(char *nome) {
-    limparTela();
-    printf("Digite seu nome: ");
-    fgets(nome, MAX_NAME_LENGTH, stdin);
-    nome[strcspn(nome, "\n")] = 0;  
-}
-
-int exibirMenu() {
-    limparTela();
-    printf("\n\e[1;31m--- QUIZ VASCO DA GAMA ---\e[0;0m\n");
-    printf("1. Iniciar Quiz\n");
-    printf("2. Regras do Quiz\n");
-    printf("3. Exibir Ranking\n");
-    printf("4. Creditos\n");
-    printf("5. Sair\n");
-    printf("Escolha uma opcao: ");
-    return 0;
-}
-
-int exibirRegras() {
-    limparTela();
-    printf("\n--- Regras do Quiz ---\n");
-    printf("1. O quiz consiste em 8 perguntas.\n");
-    printf("2. Cada pergunta tem 4 opcoes de resposta, mas apenas uma esta correta.\n");
-    printf("3. Para cada resposta correta, voce ganha 1 ponto.\n");
-    printf("4. Boa sorte!\n");
-    esperarEnter();
-    return 0;
-}
-
-int exibirCreditos() {
-    limparTela();
-    printf("\n--- Creditos ---\n");
-    printf("Desenvolvido por: gabriel\n");
-    printf("Versao: 1.3\n");
-    esperarEnter();
-    return 0;
-}
-
-int obterResposta() {
-    int resposta;
-    char buffer;
-    while (1) {
-        printf("\nSua resposta: ");
-        if (scanf("%d", &resposta) == 1 && resposta >= 1 && resposta <= 4) {
-            while ((buffer = getchar()) != '\n' && buffer != EOF)
-                ;
-            break;
-        } else {
-            printf("\nResposta invalida! Por favor, escolha um numero entre 1 e 4.\n");
-            while ((buffer = getchar()) != '\n' && buffer != EOF)
-                ;
-        }
-    }
-    return resposta;
-}
-
-void embaralharPerguntas(Pergunta perguntas[], int tamanho) {
-    srand(time(NULL));
-    for (int i = 0; i < tamanho; i++) {
-        int j = rand() % tamanho;
-        Pergunta temp = perguntas[i];
-        perguntas[i] = perguntas[j];
-        perguntas[j] = temp;
-    }
-}
-
-int iniciarQuiz(const char *nome) {
-    limparTela();
-    int resposta, pontuacao = 0;
-
-    embaralharPerguntas(perguntas, NUM_QUESTIONS);
-
-    printf("\n\e[1;37m--- Inicio do Quiz ---\e[1;0m\n");
-
-    for (int i = 0; i < NUM_QUESTIONS; i++) {
-        printf("\nPergunta %d: %s\n", i + 1, perguntas[i].pergunta);
-        for (int j = 0; j < 4; j++) {
-            printf("%d. %s\n", j + 1, perguntas[i].opcoes[j]);
-        }
-        resposta = obterResposta();
-        if (resposta == perguntas[i].respostaCorreta) {
-            pontuacao++;
-            printf("\nCorreto!\n");
-        } else {
-            printf("\nErrado! A resposta correta e %s.\n", perguntas[i].opcoes[perguntas[i].respostaCorreta - 1]);
-        }
-    }
-
-    printf("\nQuiz finalizado! \e[1;37mSua pontuacao: %d/%d\e[0;0m\n", pontuacao, NUM_QUESTIONS);
-    adicionarJogadorAoRanking(nome, pontuacao);
-    esperarEnter();
-    return 0;
-}
-
-int main() {
-    int opcao;
-    char nome[MAX_NAME_LENGTH];
-
-    carregarRanking();
 
     do {
-        exibirMenu();
+        limparTela();
+        printf("\n\e[1;31m--- QUIZ VASCO DA GAMA ---\e[0;0m\n");
+        printf("1. Iniciar Quiz\n");
+        printf("2. Regras do Quiz\n");
+        printf("3. Exibir Ranking\n");
+        printf("4. Creditos\n");
+        printf("5. Sair\n");
+        printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
-        getchar(); // Remove newline character left in the input buffer
+        getchar(); 
 
-        switch (opcao) {
-            case 1:
-                perguntarNome(nome);
-                iniciarQuiz(nome);
-                break;
-            case 2:
-                exibirRegras();
-                break;
-            case 3:
-                exibirRanking();
-                break;
-            case 4:
-                exibirCreditos();
-                break;
-            case 5:
-                printf("\nSaindo do quiz...\n");
-                break;
-            default:
-                printf("Opcao invalida! Tente novamente.\n");
-                esperarEnter();
-                break;
+        if (opcao == 1) {
+            limparTela();
+            printf("Digite seu nome: ");
+            fgets(nome, MAX_NAME_LENGTH, stdin);
+            nome[strcspn(nome, "\n")] = 0;
+
+            int resposta, pontuacao = 0;
+            srand(time(NULL));
+
+            for (int i = 0; i < NUM_QUESTIONS; i++) {
+                int j = rand() % NUM_QUESTIONS;
+                Pergunta temp = perguntas[i];
+                perguntas[i] = perguntas[j];
+                perguntas[j] = temp;
+            }
+
+            limparTela();
+            printf("\n\e[1;37m--- Inicio do Quiz ---\e[0;0m\n");
+
+            for (int i = 0; i < NUM_QUESTIONS; i++) {
+                printf("\nPergunta %d: %s\n", i + 1, perguntas[i].pergunta);
+                for (int j = 0; j < 4; j++) {
+                    printf("%d. %s\n", j + 1, perguntas[i].opcoes[j]);
+                }
+
+                while (1) {
+                    printf("Sua resposta: ");
+                    if (scanf("%d", &resposta) == 1 && resposta >= 1 && resposta <= 4) {
+                        break;
+                    } else {
+                        printf("\nResposta invalida! Por favor, escolha um numero entre 1 e 4.\n");
+                        while (getchar() != '\n');
+                    }
+                }
+
+                if (resposta == perguntas[i].respostaCorreta) {
+                    pontuacao++;
+                    printf("\nCorreto!\n");
+                } else {
+                    printf("\nErrado! A resposta correta e %s.\n", perguntas[i].opcoes[perguntas[i].respostaCorreta - 1]);
+                }
+            }
+
+            printf("\nQuiz finalizado! \e[1;37mSua pontuacao: %d/%d\e[0;0m\n", pontuacao, NUM_QUESTIONS);
+
+            if (numJogadores < MAX_PLAYERS) {
+                strcpy(ranking[numJogadores].nome, nome);
+                ranking[numJogadores].pontuacao = pontuacao;
+                numJogadores++;
+                qsort(ranking, numJogadores, sizeof(Jogador), (int (*)(const void *, const void *))strcmp);
+
+                file = fopen(RANKING_FILE, "w");
+                if (file != NULL) {
+                    for (int i = 0; i < numJogadores; i++) {
+                        fprintf(file, "%s %d\n", ranking[i].nome, ranking[i].pontuacao);
+                    }
+                    fclose(file);
+                }
+            }
+
+            esperarEnter();
+
+        } else if (opcao == 2) {
+            limparTela();
+            printf("\n--- Regras do Quiz ---\n");
+            printf("1. O quiz consiste em 8 perguntas.\n");
+            printf("2. Cada pergunta tem 4 opcoes de resposta, mas apenas uma esta correta.\n");
+            printf("3. Para cada resposta correta, voce ganha 1 ponto.\n");
+            printf("4. Boa sorte!\n");
+            esperarEnter();
+        } else if (opcao == 3) {
+            limparTela();
+            printf("\n--- Ranking ---\n");
+            for (int i = 0; i < numJogadores; i++) {
+                printf("%d. %s - %d pontos\n", i + 1, ranking[i].nome, ranking[i].pontuacao);
+            }
+            esperarEnter();
+        } else if (opcao == 4) {
+            limparTela();
+            printf("\n--- Creditos ---\n");
+            printf("Desenvolvido por: gabriel\n");
+            printf("Versao: 1.4\n");
+            esperarEnter();
+        } else if (opcao == 5) {
+            printf("\nSaindo do quiz...\n");
+        } else {
+            printf("Opcao invalida! Tente novamente.\n");
+            esperarEnter();
         }
+
     } while (opcao != 5);
 
     return 0;
